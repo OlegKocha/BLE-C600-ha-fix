@@ -1,26 +1,28 @@
-# BLE-C600 для Home Assistant
+**English** | [Русский](README.ru.md)
 
-Интеграция Bluetooth-датчика C600 на основе [Dutch-Al/BLE-C600](https://github.com/Dutch-Al/BLE-C600), с исправлением чтения BLE и сохранением последних показаний.
+# BLE-C600 for Home Assistant
 
-Поддерживает pH, электропроводность, TDS, ORP, свободный хлор, температуру, расчётное содержание солей и заряд батареи. Интервал опроса — 60 секунд.
+C600 Bluetooth sensor integration based on [Dutch-Al/BLE-C600](https://github.com/Dutch-Al/BLE-C600), with fixes for BLE reads and retention of the last readings.
 
-## Установка
+Supports pH, electrical conductivity, TDS, ORP, free chlorine, temperature, calculated salt content and battery level. Polling interval: 60 seconds.
 
-### Автоматически
+## Installation
+
+### Automatically
 
 > [!TIP]
-> Рекомендуемый способ установки. HACS должен быть установлен в Home Assistant.
+> Recommended installation method. HACS must be installed in Home Assistant.
 
-[![Открыть репозиторий в HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=OlegKocha&repository=BLE-C600&category=integration)
+[![Open the repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=OlegKocha&repository=BLE-C600&category=integration)
 
-1. Нажмите кнопку выше и откройте репозиторий в HACS.
-2. Если репозиторий ещё не добавлен, в HACS откройте «Пользовательские репозитории», добавьте `https://github.com/OlegKocha/BLE-C600` с категорией «Интеграция».
-3. Найдите `ble-c600` в HACS и скачайте интеграцию.
-4. Перезапустите Home Assistant.
+1. Click the button above and open the repository in HACS.
+2. If the repository has not been added yet, open “Custom repositories” in HACS and add `https://github.com/OlegKocha/BLE-C600` with the “Integration” category.
+3. Find `ble-c600` in HACS and download the integration.
+4. Restart Home Assistant.
 
-### Вручную
+### Manually
 
-В терминале Home Assistant клонируйте репозиторий во временный каталог и скопируйте интеграцию в `/config/custom_components/`:
+In the Home Assistant terminal, clone the repository into a temporary directory and copy the integration to `/config/custom_components/`:
 
 ```bash
 c600_tmp=$(mktemp -d)
@@ -29,110 +31,110 @@ mkdir -p /config/custom_components
 cp -R "$c600_tmp/BLE-C600/custom_components/ble_c600" /config/custom_components/
 ```
 
-Перезапустите Home Assistant. Если каталог конфигурации в вашей установке отличается от `/config`, замените путь в командах.
+Restart Home Assistant. If your installation uses a configuration directory other than `/config`, replace the path in the commands.
 
-### Конфигурация
+### Configuration
 
-1. Откройте «Настройки → Устройства и службы → Добавить интеграцию».
-2. Найдите `ble_c600` и следуйте указаниям мастера настройки.
-3. Включите C600 и дождитесь первых показаний.
+1. Open “Settings → Devices & services → Add integration”.
+2. Find `ble_c600` and follow the setup wizard.
+3. Switch on C600 and wait for the first readings.
 
-## Работа
+## Operation
 
-Включите C600 и дождитесь первого чтения. При потере связи последние значения сохраняются; атрибут `data_stale` показывает их устаревание, `last_successful_read` — время последнего успешного чтения. После перезапуска HA или перезагрузки интеграции требуется новое чтение: кэш хранится в памяти.
+Switch on C600 and wait for the first read. When the connection is lost, the last values are retained; the `data_stale` attribute indicates that they are stale, and `last_successful_read` shows the time of the last successful read. After restarting HA or reloading the integration, a new read is required: the cache is stored in memory.
 
-## Лицензия
+## License
 
-[MIT](LICENSE). Исходный проект: [Dutch-Al/BLE-C600](https://github.com/Dutch-Al/BLE-C600), автор исходного кода — jdeath.
+[MIT](LICENSE). Original project: [Dutch-Al/BLE-C600](https://github.com/Dutch-Al/BLE-C600), original code author: jdeath.
 
-## Пример оформления панели воды
+## Water dashboard example
 
-Пример таблицы и панель с восемью датчиками. Используются стандартные карточки Home Assistant. Для копирования в свой HA используйте код под спойлером.
+An example table and a panel with eight sensors. Standard Home Assistant cards are used. To copy them to your own HA, use the code in the collapsible section.
 
-### Таблица показателей
+### Parameter table
 
-| Показатель | Цветовые зоны |
+| Parameter | Color zones |
 | :--- | :--- |
-| **Кислотность или щёлочность воды (pH)** | 🔴 Сильнокислая среда (<5,0)<br>🟠 Умеренно или слабокислая вода (5,0–6,5)<br>🟢 Нейтральная среда (пригодна для питья) (6,5–8,5)<br>🟣 Щелочная среда (выше 8,5)<br> |
-| **Минерализация (TDS)** - суммарное содержание растворённых веществ | 🔵 Ультрапресная вода (<100 ppm)<br>🟢 Пресная вода (100–1000 ppm)<br>🟠 Солоноватая вода (1000–10000 ppm)<br>🔴 Солёная вода (≥10000 ppm) |
-| **Электропроводность (EC)** - способность воды проводить электрический ток; зависит от растворённых ионов и температуры | 🔵 Ультрачистая лабораторная вода (0,055–0,5 µS/cm)<br>🟣 Дистиллированная вода (0,5–10 µS/cm)<br>🟡 Вода после осмоса, дождевой и талой воды (10–200 µS/cm)<br>🟢 Питьевая водопроводная вода(200–800 µS/cm)<br>🟠 Морская вода (>800 µS/cm)<br> |
-| **Свободный хлор** - показание содержания свободного хлора. Диапазон **0,2–1 ppm** характерен для обеззараженной воды и не является обязательным для нехлорируемой скважины. | 🔵 Вода без хлора (<0,2 ppm)<br>🟢 Обычная водопроводная вода (0,2–1 ppm)<br>🟠 Сильно хлорированная вода (1-5 ppm)<br>🔴 Сильно загрезненная вода (>5 ppm) |
-| **Окислительно-восстановительный потенциал (ОВП или ORP)** | 🟣 «Мощный восстановитель. Сильные антиоксидантные свойства». Примеры: вода после бытовых ионизаторов (католит) (Ниже −200 mV), водородная вода.<br><br>🔵 Слабый восстановитель (Антиоксидант). Живая вода, легко усваивается клетками организма без потери энергии. Примеры: свежие соки, внутриклеточная жидкость человека, вода из редких целебных источников (−200 до −50 mV)<br><br>⚪ переходный диапазон около нуля (−50 - 0 mV)<br><br>🟢 Нейтральная зона. Близка к ОВП внутренних сред человека». Примеры: чистая родниковая вода, талая вода (0-150 mV)<br><br>🟡 Умеренный окислитель. Стандартная питьевая бутилированная вода. Требует от организма затрат энергии на усвоение. Примеры: большинство подземных скважин («на песок»), колодцы, покупная вода в бутылках (150 - 400 mV)<br><br>🟠 Высокий потенциал окисления. Вода безопасна микробиологически, но не пригодна для постоянного питья в сыром виде без вреда для микрофлоры. Примеры: обычная водопроводная вода, некоторые глубокие скважины (400 до 650 mV)<br><br>🔴 Высочайшая окислительная способность. Мгновенная дезинфекция, гибель любых бактерий и вирусов за секунды. Примеры: вода в бассейнах при правильном хлорировании, озонированная вода, медицинские антисептики (≥650 mV)<br><br> |
-| **Соль** - расчётное содержание солей. Расчёт **EC × 0,55** в этой интеграции. Это не отдельный анализ натрия, хлоридов или поваренной соли. | 🔵 Сверхчистая вода (<50 ppm)<br>🟣 Идеальная уровень (50–150 ppm)<br>🟢 Отличная и вкусная вода (150–300 ppm)<br>🟡 Допустимая норма, но привышена нома соли и вода может быть жесткой (300–600 ppm)<br>🟠 Высокое содержание солей (600–1000 ppm)<br>🔴 Очень высокое содержание солей (≥1000 ppm)<br><br> |
-| **Температура воды** | 🔵 ниже 15 °C;<br>🟣 15–<25 °C;<br>🟠 от 25 °C |
-| **Заряд C600** | 🔴 ниже 20%;<br>🟠 20–<50%;<br>🟢 от 50% |
+| **Water acidity or alkalinity (pH)** | 🔴 Strongly acidic environment (<5.0)<br>🟠 Moderately or slightly acidic water (5.0–6.5)<br>🟢 Neutral environment (suitable for drinking) (6.5–8.5)<br>🟣 Alkaline environment (above 8.5)<br> |
+| **Mineralization (TDS)** - total dissolved solids | 🔵 Ultra-fresh water (<100 ppm)<br>🟢 Fresh water (100–1000 ppm)<br>🟠 Brackish water (1000–10000 ppm)<br>🔴 Saline water (≥10000 ppm) |
+| **Electrical conductivity (EC)** - the ability of water to conduct electric current; depends on dissolved ions and temperature | 🔵 Ultrapure laboratory water (0.055–0.5 µS/cm)<br>🟣 Distilled water (0.5–10 µS/cm)<br>🟡 Reverse osmosis water, rainwater and meltwater (10–200 µS/cm)<br>🟢 Drinking tap water (200–800 µS/cm)<br>🟠 Seawater (>800 µS/cm)<br> |
+| **Free chlorine** - the free chlorine content reading. The **0.2–1 ppm** range is typical of disinfected water and is not required for an unchlorinated well. | 🔵 Chlorine-free water (<0.2 ppm)<br>🟢 Ordinary tap water (0.2–1 ppm)<br>🟠 Heavily chlorinated water (1–5 ppm)<br>🔴 Heavily contaminated water (>5 ppm) |
+| **Oxidation-reduction potential (ORP)** | 🟣 “Powerful reducing agent. Strong antioxidant properties.” Examples: water from household ionizers (catholyte) (below −200 mV), hydrogen water.<br><br>🔵 Weak reducing agent (antioxidant). Living water, easily absorbed by the body's cells without energy loss. Examples: fresh juices, human intracellular fluid, water from rare healing springs (−200 to −50 mV)<br><br>⚪ Transition range around zero (−50–0 mV)<br><br>🟢 Neutral zone. Close to the ORP of the body's internal environments. Examples: pure spring water, meltwater (0–150 mV)<br><br>🟡 Moderate oxidizer. Standard bottled drinking water. Requires the body to expend energy for absorption. Examples: most groundwater wells (in sand aquifers), dug wells, store-bought bottled water (150–400 mV)<br><br>🟠 High oxidation potential. The water is microbiologically safe, but is not suitable for continuous drinking in its raw state without harm to the microflora. Examples: ordinary tap water, some deep wells (400 to 650 mV)<br><br>🔴 Highest oxidizing capacity. Instant disinfection, killing any bacteria and viruses within seconds. Examples: properly chlorinated pool water, ozonated water, medical antiseptics (≥650 mV)<br><br> |
+| **Salt** - calculated salt content. Calculated as **EC × 0.55** in this integration. This is not a separate analysis of sodium, chlorides or table salt. | 🔵 Ultrapure water (<50 ppm)<br>🟣 Ideal level (50–150 ppm)<br>🟢 Excellent, pleasant-tasting water (150–300 ppm)<br>🟡 Acceptable level, but the salt limit is exceeded and the water may be hard (300–600 ppm)<br>🟠 High salt content (600–1000 ppm)<br>🔴 Very high salt content (≥1000 ppm)<br><br> |
+| **Water temperature** | 🔵 Below 15 °C;<br>🟣 15–<25 °C;<br>🟠 From 25 °C |
+| **C600 battery** | 🔴 Below 20%;<br>🟠 20–<50%;<br>🟢 From 50% |
 
-C600 не является лабораторным датчиком и не может гарантировать корректную оценку безопасности воды. Для получения точных показателей необходимо лабораторное исследование.
+C600 is not a laboratory sensor and cannot guarantee an accurate assessment of water safety. Laboratory testing is required to obtain accurate measurements.
 
-### Свежесть показаний
+### Reading freshness
 
-При выключении C600 могут отображаться последние сохранённые значения.
+When C600 is switched off, the last saved values may still be displayed.
 
-- **data_stale: true** — последнее чтение не дало нового значения этого сенсора.
-- **data_stale: false** — значение успешно получено при последнем обработанном опросе.
-- **last_successful_read** — время последнего успешного чтения, в UTC.
+- **data_stale: true** — the last read did not provide a new value for this sensor.
+- **data_stale: false** — the value was successfully received during the last processed poll.
+- **last_successful_read** — the time of the last successful read, in UTC.
 
 <details>
-<summary>Скопировать таблицу в Home Assistant — инструкция и YAML</summary>
+<summary>Copy the table to Home Assistant — instructions and YAML</summary>
 
-1. Откройте нужную панель HA и включите режим редактирования.
-2. Нажмите «Добавить карточку» → «Вручную» (Manual), либо создайте Markdown-карточку и откройте редактор кода.
-3. Замените весь код карточки приведённым YAML, включая `type: markdown` и `content: |`.
-4. Сохраните карточку и разместите её под датчиками. Это код карточки панели, его не нужно добавлять в `configuration.yaml`.
+1. Open the desired HA dashboard and enter edit mode.
+2. Click “Add card” → “Manual”, or create a Markdown card and open the code editor.
+3. Replace all of the card's code with the YAML below, including `type: markdown` and `content: |`.
+4. Save the card and place it below the sensors. This is dashboard card code; it should not be added to `configuration.yaml`.
 
 ```yaml
 type: markdown
 content: |
-  | Показатель | Цветовые зоны |
+  | Parameter | Color zones |
   | :--- | :--- |
-  | **Кислотность или щёлочность воды (pH)** | 🔴 Сильнокислая среда (<5,0)<br>🟠 Умеренно или слабокислая вода (5,0–6,5)<br>🟢 Нейтральная среда (пригодна для питья) (6,5–8,5)<br>🟣 Щелочная среда (выше 8,5)<br> |
-  | **Минерализация (TDS)** - суммарное содержание растворённых веществ | 🔵 Ультрапресная вода (<100 ppm)<br>🟢 Пресная вода (100–1000 ppm)<br>🟠 Солоноватая вода (1000–10000 ppm)<br>🔴 Солёная вода (≥10000 ppm) |
-  | **Электропроводность (EC)** - способность воды проводить электрический ток; зависит от растворённых ионов и температуры | 🔵 Ультрачистая лабораторная вода (0,055–0,5 µS/cm)<br>🟣 Дистиллированная вода (0,5–10 µS/cm)<br>🟡 Вода после осмоса, дождевой и талой воды (10–200 µS/cm)<br>🟢 Питьевая водопроводная вода(200–800 µS/cm)<br>🟠 Морская вода (>800 µS/cm)<br> |
-  | **Свободный хлор** - показание содержания свободного хлора. Диапазон **0,2–1 ppm** характерен для обеззараженной воды и не является обязательным для нехлорируемой скважины. | 🔵 Вода без хлора (<0,2 ppm)<br>🟢 Обычная водопроводная вода (0,2–1 ppm)<br>🟠 Сильно хлорированная вода (1-5 ppm)<br>🔴 Сильно загрезненная вода (>5 ppm) |
-  | **Окислительно-восстановительный потенциал (ОВП или ORP)** | 🟣 «Мощный восстановитель. Сильные антиоксидантные свойства». Примеры: вода после бытовых ионизаторов (католит) (Ниже −200 mV), водородная вода.<br><br>🔵 Слабый восстановитель (Антиоксидант). Живая вода, легко усваивается клетками организма без потери энергии. Примеры: свежие соки, внутриклеточная жидкость человека, вода из редких целебных источников (−200 до −50 mV)<br><br>⚪ переходный диапазон около нуля (−50 - 0 mV)<br><br>🟢 Нейтральная зона. Близка к ОВП внутренних сред человека». Примеры: чистая родниковая вода, талая вода (0-150 mV)<br><br>🟡 Умеренный окислитель. Стандартная питьевая бутилированная вода. Требует от организма затрат энергии на усвоение. Примеры: большинство подземных скважин («на песок»), колодцы, покупная вода в бутылках (150 - 400 mV)<br><br>🟠 Высокий потенциал окисления. Вода безопасна микробиологически, но не пригодна для постоянного питья в сыром виде без вреда для микрофлоры. Примеры: обычная водопроводная вода, некоторые глубокие скважины (400 до 650 mV)<br><br>🔴 Высочайшая окислительная способность. Мгновенная дезинфекция, гибель любых бактерий и вирусов за секунды. Примеры: вода в бассейнах при правильном хлорировании, озонированная вода, медицинские антисептики (≥650 mV)<br><br> |
-  | **Соль** - расчётное содержание солей. Расчёт **EC × 0,55** в этой интеграции. Это не отдельный анализ натрия, хлоридов или поваренной соли. | 🔵 Сверхчистая вода (<50 ppm)<br>🟣 Идеальная уровень (50–150 ppm)<br>🟢 Отличная и вкусная вода (150–300 ppm)<br>🟡 Допустимая норма, но привышена нома соли и вода может быть жесткой (300–600 ppm)<br>🟠 Высокое содержание солей (600–1000 ppm)<br>🔴 Очень высокое содержание солей (≥1000 ppm)<br><br> |
-  | **Температура воды** | 🔵 ниже 15 °C;<br>🟣 15–<25 °C;<br>🟠 от 25 °C |
-  | **Заряд C600** | 🔴 ниже 20%;<br>🟠 20–<50%;<br>🟢 от 50% |
+  | **Water acidity or alkalinity (pH)** | 🔴 Strongly acidic environment (<5.0)<br>🟠 Moderately or slightly acidic water (5.0–6.5)<br>🟢 Neutral environment (suitable for drinking) (6.5–8.5)<br>🟣 Alkaline environment (above 8.5)<br> |
+  | **Mineralization (TDS)** - total dissolved solids | 🔵 Ultra-fresh water (<100 ppm)<br>🟢 Fresh water (100–1000 ppm)<br>🟠 Brackish water (1000–10000 ppm)<br>🔴 Saline water (≥10000 ppm) |
+  | **Electrical conductivity (EC)** - the ability of water to conduct electric current; depends on dissolved ions and temperature | 🔵 Ultrapure laboratory water (0.055–0.5 µS/cm)<br>🟣 Distilled water (0.5–10 µS/cm)<br>🟡 Reverse osmosis water, rainwater and meltwater (10–200 µS/cm)<br>🟢 Drinking tap water (200–800 µS/cm)<br>🟠 Seawater (>800 µS/cm)<br> |
+  | **Free chlorine** - the free chlorine content reading. The **0.2–1 ppm** range is typical of disinfected water and is not required for an unchlorinated well. | 🔵 Chlorine-free water (<0.2 ppm)<br>🟢 Ordinary tap water (0.2–1 ppm)<br>🟠 Heavily chlorinated water (1–5 ppm)<br>🔴 Heavily contaminated water (>5 ppm) |
+  | **Oxidation-reduction potential (ORP)** | 🟣 “Powerful reducing agent. Strong antioxidant properties.” Examples: water from household ionizers (catholyte) (below −200 mV), hydrogen water.<br><br>🔵 Weak reducing agent (antioxidant). Living water, easily absorbed by the body's cells without energy loss. Examples: fresh juices, human intracellular fluid, water from rare healing springs (−200 to −50 mV)<br><br>⚪ Transition range around zero (−50–0 mV)<br><br>🟢 Neutral zone. Close to the ORP of the body's internal environments. Examples: pure spring water, meltwater (0–150 mV)<br><br>🟡 Moderate oxidizer. Standard bottled drinking water. Requires the body to expend energy for absorption. Examples: most groundwater wells (in sand aquifers), dug wells, store-bought bottled water (150–400 mV)<br><br>🟠 High oxidation potential. The water is microbiologically safe, but is not suitable for continuous drinking in its raw state without harm to the microflora. Examples: ordinary tap water, some deep wells (400 to 650 mV)<br><br>🔴 Highest oxidizing capacity. Instant disinfection, killing any bacteria and viruses within seconds. Examples: properly chlorinated pool water, ozonated water, medical antiseptics (≥650 mV)<br><br> |
+  | **Salt** - calculated salt content. Calculated as **EC × 0.55** in this integration. This is not a separate analysis of sodium, chlorides or table salt. | 🔵 Ultrapure water (<50 ppm)<br>🟣 Ideal level (50–150 ppm)<br>🟢 Excellent, pleasant-tasting water (150–300 ppm)<br>🟡 Acceptable level, but the salt limit is exceeded and the water may be hard (300–600 ppm)<br>🟠 High salt content (600–1000 ppm)<br>🔴 Very high salt content (≥1000 ppm)<br><br> |
+  | **Water temperature** | 🔵 Below 15 °C;<br>🟣 15–<25 °C;<br>🟠 From 25 °C |
+  | **C600 battery** | 🔴 Below 20%;<br>🟠 20–<50%;<br>🟢 From 50% |
 
-  C600 не является лабораторным датчиком и не может гарантировать корректную оценку безопасности воды. Для получения точных показателей необходимо лабораторное исследование.
+  C600 is not a laboratory sensor and cannot guarantee an accurate assessment of water safety. Laboratory testing is required to obtain accurate measurements.
 
-  ### Свежесть показаний
+  ### Reading freshness
 
-  При выключении C600 могут отображаться последние сохранённые значения.
+  When C600 is switched off, the last saved values may still be displayed.
 
-  - **data_stale: true** — последнее чтение не дало нового значения этого сенсора.
-  - **data_stale: false** — значение успешно получено при последнем обработанном опросе.
-  - **last_successful_read** — время последнего успешного чтения, в UTC.
+  - **data_stale: true** — the last read did not provide a new value for this sensor.
+  - **data_stale: false** — the value was successfully received during the last processed poll.
+  - **last_successful_read** — the time of the last successful read, in UTC.
 ```
 
 </details>
 
-### Датчики на панели
+### Dashboard sensors
 
-![Пример панели C600 в Home Assistant: состав воды, дополнительные показатели, температура и питание](docs/images/water-dashboard.png)
+![Example C600 dashboard in Home Assistant: water composition, additional parameters, temperature and power](docs/images/water-dashboard.png)
 
 <details>
-<summary>Скопировать датчики в Home Assistant — инструкция и YAML</summary>
+<summary>Copy the sensors to Home Assistant — instructions and YAML</summary>
 
-1. Сначала добавьте интеграцию C600 и дождитесь показаний.
-2. В «Инструменты разработчика → Состояния» найдите свои восемь сенсоров. В примере ниже `sensor.51_d5_ef_19_f3_86_…` — идентификаторы устройства автора. Замените каждое `entity:` на фактический идентификатор своего сенсора. Если различается только префикс, можно заменить `51_d5_ef_19_f3_86` во всём блоке. После этого проверьте все восемь идентификаторов.
-3. Для ORP проверьте единицу в «Состояниях»: пример рассчитан на **mV**. Интеграция использует V как исходную единицу; выберите mV в настройках сущности ORP и проверьте результат. Поле `unit: mV` в карточке меняет подпись, а не пересчитывает число. Если оставляете состояние в V, используйте `unit: V`, `min: -1`, `max: 1`, а пороги ORP замените на `-1`, `-0.2`, `-0.05`, `0`, `0.15`, `0.4`, `0.65`.
-4. На панели: «Редактировать» → «Добавить карточку» → «Вручную» (Manual). Вставьте весь блок от `type: vertical-stack`, заменив старый код карточки.
-5. Проверьте предпросмотр и сохраните. Если отображается «Объект не найден», проверьте соответствующее `entity:`.
+1. First, add the C600 integration and wait for readings.
+2. Find your eight sensors in “Developer tools → States”. In the example below, `sensor.51_d5_ef_19_f3_86_…` are the author's device entity IDs. Replace each `entity:` with your sensor's actual entity ID. If only the prefix differs, you can replace `51_d5_ef_19_f3_86` throughout the block. Then check all eight entity IDs.
+3. For ORP, check the unit in “States”: the example uses **mV**. The integration uses V as its native unit; select mV in the ORP entity settings and check the result. The `unit: mV` field in the card changes the label, not the numeric value. If you keep the state in V, use `unit: V`, `min: -1`, `max: 1`, and change the ORP thresholds to `-1`, `-0.2`, `-0.05`, `0`, `0.15`, `0.4`, `0.65`.
+4. On the dashboard: “Edit” → “Add card” → “Manual”. Paste the entire block starting with `type: vertical-stack`, replacing the old card code.
+5. Check the preview and save. If “Entity not found” appears, check the corresponding `entity:`.
 
-**Границы цветов:** каждый `from` включён в следующий сегмент. Например, TDS 1000 — оранжевый, Salt 150 — зелёный, ORP −200 — синий. pH 8,50 остаётся зелёным, 8,51 — фиолетовый; хлор 1,0 остаётся зелёным, 1,1 — жёлто-оранжевый. В предоставленном автором YAML EC начинается с фиолетового от 0, а синяя лабораторная зона из таблицы отдельно не выделена. Настройки сохранены как на скриншоте. Максимум gauge — граница отображения, а не предел измерения прибора.
+**Color boundaries:** each `from` value is included in the next segment. For example, TDS 1000 is orange, Salt 150 is green, and ORP −200 is blue. pH 8.50 remains green, while 8.51 is purple; chlorine 1.0 remains green, while 1.1 is yellow-orange. In the author's YAML, EC starts with purple at 0, and the blue laboratory zone in the table is not shown separately. The settings are preserved as in the screenshot. The gauge maximum is the display limit, not the instrument's measurement limit.
 
 ```yaml
 type: vertical-stack
 cards:
 - type: grid
-  title: Состав воды
+  title: Water composition
   columns: 3
   square: false
   cards:
   - type: gauge
     entity: sensor.51_d5_ef_19_f3_86_ph
-    name: Кислотность
+    name: Acidity
     needle: true
     min: 0
     max: 14
@@ -148,7 +150,7 @@ cards:
     unit: pH
   - type: gauge
     entity: sensor.51_d5_ef_19_f3_86_total_dissolved_solids
-    name: Минерализация
+    name: Mineralization
     needle: true
     min: 0
     max: 15000
@@ -164,7 +166,7 @@ cards:
     unit: ppm
   - type: gauge
     entity: sensor.51_d5_ef_19_f3_86_electrical_conductivity
-    name: Проводимость
+    name: Conductivity
     needle: true
     min: 0
     max: 2000
@@ -179,13 +181,13 @@ cards:
       color: '#EF8C32'
     unit: µS/cm
 - type: grid
-  title: Дополнительные показатели
+  title: Additional parameters
   columns: 3
   square: false
   cards:
   - type: gauge
     entity: sensor.51_d5_ef_19_f3_86_free_chlorine
-    name: Свободный хлор
+    name: Free chlorine
     needle: true
     min: 0
     max: 6
@@ -201,7 +203,7 @@ cards:
     unit: ppm
   - type: gauge
     entity: sensor.51_d5_ef_19_f3_86_oxidation_reduction_potential
-    name: ОВП · ORP
+    name: ORP
     needle: true
     min: -1000
     max: 1000
@@ -223,7 +225,7 @@ cards:
     unit: mV
   - type: gauge
     entity: sensor.51_d5_ef_19_f3_86_salt
-    name: Соль
+    name: Salt
     needle: true
     min: 0
     max: 1500
@@ -241,13 +243,13 @@ cards:
     - from: 1000
       color: '#C63D32'
 - type: grid
-  title: Температура и питание
+  title: Temperature and power
   columns: 2
   square: false
   cards:
   - type: gauge
     entity: sensor.51_d5_ef_19_f3_86_temperature
-    name: Температура воды
+    name: Water temperature
     needle: true
     min: 0
     max: 40
@@ -260,7 +262,7 @@ cards:
       color: '#F0AD3D'
   - type: gauge
     entity: sensor.51_d5_ef_19_f3_86_battery
-    name: Заряд C600
+    name: C600 battery
     needle: true
     min: 0
     max: 100
