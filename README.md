@@ -13,10 +13,10 @@ Supports pH, electrical conductivity, TDS, ORP, free chlorine, temperature, calc
 > [!TIP]
 > Recommended installation method. HACS must be installed in Home Assistant.
 
-[![Open the repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=OlegKocha&repository=BLE-C600&category=integration)
+[![Open the repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=OlegKocha&repository=BLE-C600-ha-fix&category=integration)
 
 1. Click the button above and open the repository in HACS.
-2. If the repository has not been added yet, open “Custom repositories” in HACS and add `https://github.com/OlegKocha/BLE-C600` with the “Integration” category.
+2. If the repository has not been added yet, open “Custom repositories” in HACS and add `https://github.com/OlegKocha/BLE-C600-ha-fix` with the “Integration” category.
 3. Find `ble-c600` in HACS and download the integration.
 4. Restart Home Assistant.
 
@@ -26,9 +26,9 @@ In the Home Assistant terminal, clone the repository into a temporary directory 
 
 ```bash
 c600_tmp=$(mktemp -d)
-git clone https://github.com/OlegKocha/BLE-C600.git "$c600_tmp/BLE-C600"
+git clone https://github.com/OlegKocha/BLE-C600-ha-fix.git "$c600_tmp/BLE-C600-ha-fix"
 mkdir -p /config/custom_components
-cp -R "$c600_tmp/BLE-C600/custom_components/ble_c600" /config/custom_components/
+cp -R "$c600_tmp/BLE-C600-ha-fix/custom_components/ble_c600" /config/custom_components/
 ```
 
 Restart Home Assistant. If your installation uses a configuration directory other than `/config`, replace the path in the commands.

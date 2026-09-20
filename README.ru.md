@@ -13,10 +13,10 @@
 > [!TIP]
 > Рекомендуемый способ установки. HACS должен быть установлен в Home Assistant.
 
-[![Открыть репозиторий в HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=OlegKocha&repository=BLE-C600&category=integration)
+[![Открыть репозиторий в HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=OlegKocha&repository=BLE-C600-ha-fix&category=integration)
 
 1. Нажмите кнопку выше и откройте репозиторий в HACS.
-2. Если репозиторий ещё не добавлен, в HACS откройте «Пользовательские репозитории», добавьте `https://github.com/OlegKocha/BLE-C600` с категорией «Интеграция».
+2. Если репозиторий ещё не добавлен, в HACS откройте «Пользовательские репозитории», добавьте `https://github.com/OlegKocha/BLE-C600-ha-fix` с категорией «Интеграция».
 3. Найдите `ble-c600` в HACS и скачайте интеграцию.
 4. Перезапустите Home Assistant.
 
@@ -26,9 +26,9 @@
 
 ```bash
 c600_tmp=$(mktemp -d)
-git clone https://github.com/OlegKocha/BLE-C600.git "$c600_tmp/BLE-C600"
+git clone https://github.com/OlegKocha/BLE-C600-ha-fix.git "$c600_tmp/BLE-C600-ha-fix"
 mkdir -p /config/custom_components
-cp -R "$c600_tmp/BLE-C600/custom_components/ble_c600" /config/custom_components/
+cp -R "$c600_tmp/BLE-C600-ha-fix/custom_components/ble_c600" /config/custom_components/
 ```
 
 Перезапустите Home Assistant. Если каталог конфигурации в вашей установке отличается от `/config`, замените путь в командах.
