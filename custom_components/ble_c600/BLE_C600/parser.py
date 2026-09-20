@@ -24,6 +24,15 @@ from .const import (
 
 READ_UUID = "0000ff02-0000-1000-8000-00805f9b34fb"
 
+# Preserve the original parser's minimum (it accesses byte 17).
+# ORP needs bytes 20 and 21 and is handled separately when they are absent.
+MIN_FRAME_LENGTH = 18
+ORP_FRAME_LENGTH = 22
+READ_ATTEMPTS = 3
+READ_RETRY_DELAY = 1.0
+READ_TIMEOUT = 10.0
+DISCONNECT_TIMEOUT = 5.0
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -74,11 +83,42 @@ class C600BluetoothDeviceData:
         return frame_array
     
     def decode_position(self,decodedData,idx):
+        if idx < 0 or idx + 2 > len(decodedData):
+            raise BleakError(
+                f"C600: missing bytes {idx}:{idx + 2} in {len(decodedData)}-byte frame"
+            )
         return int.from_bytes(decodedData[idx:idx+2], byteorder="big", signed=True)
+
+    async def _read_frame(self, client: BleakClient) -> bytearray:
+        """Retry short responses without inventing measurements or packet offsets."""
+        lengths = []
+        for attempt in range(READ_ATTEMPTS):
+            if attempt:
+                await asyncio.sleep(READ_RETRY_DELAY)
+            try:
+                data = await asyncio.wait_for(
+                    client.read_gatt_char(READ_UUID), timeout=READ_TIMEOUT
+                )
+            except asyncio.TimeoutError as err:
+                raise BleakError(
+                    f"C600: BLE read timed out after {READ_TIMEOUT:g} seconds"
+                ) from err
+            lengths.append(len(data))
+            if len(data) >= MIN_FRAME_LENGTH:
+                return data
+            self.logger.debug(
+                "C600 short BLE response, attempt %s/%s: %s bytes, raw=%s",
+                attempt + 1, READ_ATTEMPTS, len(data), data.hex(),
+            )
+        raise BleakError(
+            f"C600: short BLE response after {READ_ATTEMPTS} reads "
+            f"(lengths: {lengths}; expected at least {MIN_FRAME_LENGTH} bytes "
+            "for the configured C600 packet layout)"
+        )
         
     async def _get_status(self, client: BleakClient, device: C600Device) -> C600Device:
         _LOGGER.debug("Getting Status")
-        data = await client.read_gatt_char(READ_UUID)
+        data = await self._read_frame(client)
         #_LOGGER.debug("Raw BLE bytes: %s", [hex(b) for b in data])  # Optional but helpful
 
         decodedData = self.decode(data)
@@ -130,7 +170,14 @@ class C600BluetoothDeviceData:
 
         device.sensors["pH"] = self.decode_position(decodedData,3) / 100.0 
 		
-        device.sensors["ORP"] = self.decode_position(decodedData,20) / 1000.0
+        if len(decodedData) >= ORP_FRAME_LENGTH:
+            device.sensors["ORP"] = self.decode_position(decodedData,20) / 1000.0
+        else:
+            device.sensors["ORP"] = None
+            self.logger.debug(
+                "C600: %s-byte response lacks ORP bytes 20:22; ORP unknown, raw=%s",
+                len(data), data.hex(),
+            )
 		
         device.sensors["temperature"] = self.decode_position(decodedData,13) / 10.0
         
@@ -144,20 +191,27 @@ class C600BluetoothDeviceData:
     async def update_device(self, ble_device: BLEDevice) -> C600Device:
         """Connects to the device through BLE and retrieves relevant data"""
         _LOGGER.debug("Update Device")
+        if ble_device is None:
+            raise BleakError("C600: device is not currently available to Home Assistant Bluetooth")
         client = await establish_connection(BleakClient, ble_device, ble_device.address)
         _LOGGER.debug("Got Client")
         #await client.pair()
         device = C600Device()
         _LOGGER.debug("Made Device")
         
-        device = await self._get_status(client, device)
-        _LOGGER.debug("got Status")
-        device.name = ble_device.address
-        device.address = ble_device.address
-        _LOGGER.debug("device.name: %s", device.name)
-        _LOGGER.debug("device.address: %s", device.address)
-
-        await client.disconnect()
-
-        return device
+        try:
+            device = await self._get_status(client, device)
+            _LOGGER.debug("got Status")
+            device.name = ble_device.address
+            device.address = ble_device.address
+            return device
+        finally:
+            # Attempt cleanup on success, parsing errors and task cancellation.
+            # A cleanup failure must not replace the original read/parse error.
+            try:
+                await asyncio.wait_for(client.disconnect(), timeout=DISCONNECT_TIMEOUT)
+            except Exception as err:
+                self.logger.warning(
+                    "C600: failed to disconnect from %s: %s", ble_device.address, err
+                )
 																	 

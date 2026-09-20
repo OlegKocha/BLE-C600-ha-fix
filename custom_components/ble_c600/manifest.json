@@ -6,11 +6,16 @@
       "local_name": "BLE-C600*"
     }
   ],
-  "codeowners": ["@jdeath"],	
+  "codeowners": [
+    "@jdeath",
+    "@OlegKocha"
+  ],
   "config_flow": true,
-  "dependencies": ["bluetooth_adapters"],
-  "documentation": "https://www.github.com/jdeath/BLE-C600",
+  "dependencies": [
+    "bluetooth_adapters"
+  ],
+  "documentation": "https://github.com/OlegKocha/BLE-C600",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/jdeath/BLE-C600/issues",
-  "version": "1.0"
+  "issue_tracker": "https://github.com/OlegKocha/BLE-C600/issues",
+  "version": "1.0.1"
 }

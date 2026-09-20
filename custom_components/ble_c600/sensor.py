@@ -1,7 +1,8 @@
-"""Support for C600 ble sensors."""
+"""C600 sensors: keep last successful readings during BLE outages."""
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 
 from .BLE_C600 import C600Device
 
@@ -19,7 +20,7 @@ from homeassistant.const import (
     UnitOfElectricPotential,
     UnitOfConductivity,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -38,7 +39,7 @@ SENSORS_MAPPING_TEMPLATE: dict[str, SensorEntityDescription] = {
     "EC": SensorEntityDescription(
         key="EC",
         name="Electrical Conductivity",
-        native_unit_of_measurement=UnitOfConductivity.MICROSIEMENS,
+        native_unit_of_measurement=UnitOfConductivity.MICROSIEMENS_PER_CM,
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:flash-triangle-outline",
     ),
@@ -138,6 +139,10 @@ class C600Sensor(CoordinatorEntity[DataUpdateCoordinator[C600Device]], SensorEnt
         """Populate the C600 entity with relevant data."""
         super().__init__(coordinator)
         self.entity_description = entity_description
+        self._last_value: StateType = None
+        self._last_successful_read: str | None = None
+        self._data_stale = True
+        self._cache_successful_reading()
 
         name = f"{C600_device.name} {C600_device.identifier}"
 
@@ -158,10 +163,39 @@ class C600Sensor(CoordinatorEntity[DataUpdateCoordinator[C600Device]], SensorEnt
             sw_version=C600_device.sw_version,
         )
 
+    @callback
+    def _cache_successful_reading(self) -> None:
+        """Keep the last received value when a poll fails or omits this field."""
+        self._data_stale = True
+        if not self.coordinator.last_update_success or self.coordinator.data is None:
+            return
+        value = self.coordinator.data.sensors.get(self.entity_description.key)
+        if value is None:
+            return
+        self._last_value = value
+        self._last_successful_read = datetime.now(timezone.utc).isoformat()
+        self._data_stale = False
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Publish new readings or mark the retained readings as stale."""
+        self._cache_successful_reading()
+        self.async_write_ha_state()
+
+    @property
+    def available(self) -> bool:
+        """Stay available after at least one valid reading in this HA session."""
+        return self._last_value is not None
+
     @property
     def native_value(self) -> StateType:
-        """Return the value reported by the sensor."""
-        try:
-            return self.coordinator.data.sensors[self.entity_description.key]
-        except KeyError:
-            return None
+        """Return the latest successfully received value, including zero."""
+        return self._last_value
+
+    @property
+    def extra_state_attributes(self) -> dict[str, str | bool | None]:
+        """Expose freshness separately from the retained measurement."""
+        return {
+            "data_stale": self._data_stale,
+            "last_successful_read": self._last_successful_read,
+        }

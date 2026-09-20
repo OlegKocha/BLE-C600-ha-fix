@@ -1,5 +1,4 @@
 {
   "name": "ble-c600",
-  "render_readme": true,
-  "homeassistant": "2021.3.1"
+  "render_readme": true
 }
