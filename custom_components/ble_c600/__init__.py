@@ -4,15 +4,13 @@ from __future__ import annotations
 from datetime import timedelta
 import logging
 
-from .BLE_C600 import C600BluetoothDeviceData
+from .BLE_C600 import C600BluetoothDeviceData, C600Device
 
 from homeassistant.components import bluetooth
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.util.unit_system import METRIC_SYSTEM
 
 from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
 
@@ -26,18 +24,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     address = entry.unique_id
 
-    elevation = hass.config.elevation
-    is_metric = hass.config.units is METRIC_SYSTEM
     assert address is not None
-
-    ble_device = bluetooth.async_ble_device_from_address(hass, address)
-
-    if not ble_device:
-        raise ConfigEntryNotReady(f"Could not find C600 device with address {address}")
 
     async def _async_update_method():
         """Get data from C600 BLE."""
         ble_device = bluetooth.async_ble_device_from_address(hass, address)
+        if ble_device is None:
+            # A powered-off device is expected, including during HA startup.
+            # Empty readings mark the entity caches stale without blocking setup.
+            _LOGGER.debug("C600 %s is offline; waiting for it to return", address)
+            return C600Device(name=address, address=address)
         c600 = C600BluetoothDeviceData(_LOGGER)
 
         try:
@@ -51,11 +47,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass,
         _LOGGER,
         name=DOMAIN,
+        config_entry=entry,
         update_method=_async_update_method,
         update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
     )
 
-    await coordinator.async_config_entry_first_refresh()
+    # Create the entities even when the first BLE read fails. Their restored
+    # values remain visible, and coordinator listeners keep scheduling polls.
+    await coordinator.async_refresh()
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 

@@ -1,15 +1,16 @@
-"""C600 sensors: keep last successful readings during BLE outages."""
+"""C600 sensors: retain readings across BLE outages and HA restarts."""
 from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
+from math import isfinite
 
 from .BLE_C600 import C600Device
 
 from homeassistant import config_entries
 from homeassistant.components.sensor import (
     SensorDeviceClass,
-    SensorEntity,
+    RestoreSensor,
     SensorEntityDescription,
     SensorStateClass,
 )
@@ -29,7 +30,6 @@ from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
 )
-from homeassistant.util.unit_system import METRIC_SYSTEM
 
 from .const import DOMAIN
 
@@ -103,28 +103,19 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the C600 BLE sensors."""
-    is_metric = hass.config.units is METRIC_SYSTEM
-
     coordinator: DataUpdateCoordinator[C600Device] = hass.data[DOMAIN][entry.entry_id]
-    sensors_mapping = SENSORS_MAPPING_TEMPLATE.copy()
-    entities = []
-    _LOGGER.debug("got sensors: %s", coordinator.data.sensors)
-    for sensor_type, sensor_value in coordinator.data.sensors.items():
-        if sensor_type not in sensors_mapping:
-            _LOGGER.debug(
-                "Unknown sensor type detected: %s, %s",
-                sensor_type,
-                sensor_value,
-            )
-            continue
-        entities.append(
-            C600Sensor(coordinator, coordinator.data, sensors_mapping[sensor_type])
-        )
-
-    async_add_entities(entities)
+    address = entry.unique_id
+    assert address is not None
+    # Preserve the identity used by successful reads in previous versions.
+    # All eight entities must exist even if the device is offline at startup.
+    device = C600Device(name=address, address=address)
+    async_add_entities(
+        C600Sensor(coordinator, device, description)
+        for description in SENSORS_MAPPING_TEMPLATE.values()
+    )
 
 
-class C600Sensor(CoordinatorEntity[DataUpdateCoordinator[C600Device]], SensorEntity):
+class C600Sensor(CoordinatorEntity[DataUpdateCoordinator[C600Device]], RestoreSensor):
     """C600 BLE sensors for the device."""
 
     #_attr_state_class = SensorStateClass.MEASUREMENT
@@ -163,6 +154,34 @@ class C600Sensor(CoordinatorEntity[DataUpdateCoordinator[C600Device]], SensorEnt
             sw_version=C600_device.sw_version,
         )
 
+    async def async_added_to_hass(self) -> None:
+        """Restore native readings and their timestamps, without making them fresh."""
+        await super().async_added_to_hass()
+        if self._last_value is not None:
+            return
+
+        restored = await self.async_get_last_sensor_data()
+        last_state = await self.async_get_last_state()
+        # A BLE update may arrive while restore data is being loaded.
+        if self._last_value is not None or restored is None:
+            return
+        value = restored.native_value
+        if (
+            restored.native_unit_of_measurement != self.native_unit_of_measurement
+            or isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not isfinite(value)
+        ):
+            return
+
+        # Never restore a displayed state as a native value (e.g. mV as V).
+        self._last_value = value
+        if last_state is not None:
+            timestamp = last_state.attributes.get("last_successful_read")
+            if isinstance(timestamp, str):
+                self._last_successful_read = timestamp
+        self._data_stale = True
+
     @callback
     def _cache_successful_reading(self) -> None:
         """Keep the last received value when a poll fails or omits this field."""
@@ -184,7 +203,7 @@ class C600Sensor(CoordinatorEntity[DataUpdateCoordinator[C600Device]], SensorEnt
 
     @property
     def available(self) -> bool:
-        """Stay available after at least one valid reading in this HA session."""
+        """Stay available with a live or restored reading, even when offline."""
         return self._last_value is not None
 
     @property
