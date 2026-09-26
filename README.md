@@ -41,7 +41,13 @@ Restart Home Assistant. If your installation uses a configuration directory othe
 
 ## Operation
 
-Switch on C600 and wait for the first read. When the connection is lost, the last values are retained; the `data_stale` attribute indicates that they are stale, and `last_successful_read` shows the time of the last successful read. After restarting HA or reloading the integration, a new read is required: the cache is stored in memory.
+The integration loads all eight sensors even if C600 is switched off when Home Assistant starts. It keeps polling the saved Bluetooth address every 60 seconds and resumes updates when the device becomes available.
+
+After a successful read, values are retained during BLE outages and restored after a Home Assistant restart or integration reload. Restored readings are marked `data_stale: true`; `last_successful_read` keeps the original read time until fresh data arrives. Values are saved using Home Assistant's sensor state restoration mechanism, in their native units.
+
+If no saved reading exists for a sensor, it remains unavailable until C600 supplies one; the integration itself still loads. Versions 1.0 and 1.0.1 did not save values for restart restoration, so after upgrading to 1.0.2 you need one successful read before values can be restored on future restarts.
+
+When updating through HACS, use [OlegKocha/BLE-C600-ha-fix](https://github.com/OlegKocha/BLE-C600-ha-fix). Updating the original repository can overwrite these fixes. Keep the existing device configuration: removing and adding the device again is not required.
 
 ## License
 
